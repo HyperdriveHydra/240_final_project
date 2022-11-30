@@ -6,10 +6,9 @@ public class User {
     private String username;
 
     //constructor for making a new PassWorks user
-    public User() {
-        Scanner scan = new Scanner(System.in);
-        System.out.println("What is the name of this new User?");
-        username = scan.nextLine();
+    public User(String username, Boolean n) {
+        username = username.substring(username.indexOf(':')+2);
+        this.username = username;
         File file = new File("users/"+username+".user");
         try {
             if (!file.createNewFile()) {
@@ -23,6 +22,7 @@ public class User {
 
     //constructor for given PassWorks user
     public User(String username) {
+        username = username.substring(username.indexOf(':')+2);
         this.username = username;
     }
 
