@@ -9,7 +9,7 @@ import java.util.*;
 
 import javax.swing.*;
 
-public class GUI {
+public class GUI extends JLabel{
 
     public GUI() {
 
@@ -27,9 +27,6 @@ public class GUI {
         frame.setTitle("PassWorks (Pre-alpha)");
         frame.pack();
         frame.setVisible(true);
-
-
-
 
     }
 

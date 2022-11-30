@@ -4,6 +4,7 @@ public class Main {
 
     public static void main(String[] args) {
 
+        //testing
         new GUI();
         User test = loadUser("test");
         System.out.println(test.getPassword());

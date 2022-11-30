@@ -5,6 +5,7 @@ import static java.lang.Boolean.*;
 
 public class Account {
 
+    //these are all the pieces of data we need to know for a given account on a website
     private String company;
     private String username;
     private String password;
@@ -12,6 +13,7 @@ public class Account {
     private String sQuestion_1;
     private String sQuestion_2;
 
+    //this is a constructor for when the user is creating a new account
     public Account(String company, String username, String password, Boolean isProtected) {
         Scanner scan = new Scanner(System.in);
         this.company = company;
@@ -33,6 +35,7 @@ public class Account {
         }
     }
 
+    //initializes an account from a file
     public Account(Scanner in) {
         company = in.nextLine();
         username = in.nextLine();
@@ -48,6 +51,9 @@ public class Account {
     public String getCompany() {
         return company;
     }
+
+    //returns the password immediately if unprotected, otherwise asks security questions
+    //and only returns the password if both are correct
     public String getPassword() {
         Scanner scan = new Scanner(System.in);
         if (isProtected) {

@@ -5,6 +5,7 @@ import java.util.*;
 public class User {
     private String username;
 
+    //constructor for making a new PassWorks user
     public User() {
         Scanner scan = new Scanner(System.in);
         System.out.println("What is the name of this new User?");
@@ -20,15 +21,21 @@ public class User {
         }
     }
 
+    //constructor for given PassWorks user
     public User(String username) {
         this.username = username;
     }
 
+    //when the user wants to get a password, this method goes through the options of
+    //which site/product it is for, then which user of that site it is for, then calls
+    //Account.getPassword() on that account
     public String getPassword() {
         ArrayList<Account> accounts = new ArrayList<>();
         ArrayList<String> companies = new ArrayList<>();
         Scanner scan = new Scanner(System.in);
         String password;
+
+        //opening their .user file
         File file = new File("users/"+username+".user");
         try {
             Scanner in = new Scanner(file);
@@ -41,6 +48,8 @@ public class User {
             System.out.println("File not found");
             e.printStackTrace();
         }
+
+        //asking about product/site and user to determine which account to get the password for
         System.out.println("Which company/product/site do you need the password for?");
         for (Account a : accounts) {
             if(!companies.contains(a.getCompany())) {
@@ -64,7 +73,7 @@ public class User {
             }
             String user = scan.nextLine();
             for (Account a : accounts) {
-                if (a.getUsername().equals(user)) {
+                if (a.getUsername().equals(user) && a.getCompany().equals(company)) {
                     count = accounts.indexOf(a);
                 }
             }
