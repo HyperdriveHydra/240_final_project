@@ -189,6 +189,5 @@ public class GUI extends JLabel{
         frame.pack();
         frame.setSize(500,500);
         frame.setVisible(true);
-
     }
 }
