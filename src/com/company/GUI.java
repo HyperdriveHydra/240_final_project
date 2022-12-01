@@ -7,6 +7,8 @@ import java.awt.event.*;
 import java.util.*;
 import static java.lang.Boolean.parseBoolean;
 
+//enumerations for button and text box types,
+//as well as the state of the UI
 enum ButtonType {
     getPass,
     addPass,
@@ -35,6 +37,7 @@ enum State {
     changePass,
     addUser
 }
+
 class ButtonListener implements ActionListener {
     private ButtonType button;
     private GUI gui;
@@ -167,7 +170,13 @@ class TextListener implements ActionListener {
             gui.setPassword(text.getText().substring(text.getText().indexOf(':')+2));
         } else if (field == FieldType.prot) {
             gui.setIsProt(parseBoolean(text.getText().substring(text.getText().indexOf(':')+2)));
-            gui.addSQ();
+            if (gui.getIsProt()) {
+                gui.addSQ();
+            } else {
+                gui.getUser().addAccount(new Account(gui.getCompany(), gui.getUsername(), gui.getPassword(), gui.getIsProt(),
+                        gui.getQ1()+"/"+gui.getA1(), gui.getQ2()+"/"+gui.getA2()));
+                gui.toHome();
+            }
         }
     }
 }

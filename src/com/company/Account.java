@@ -16,7 +16,6 @@ public class Account {
 
     //this is a constructor for when the user is creating a new account
     public Account(String company, String username, String password, Boolean isProtected, String q1, String q2) {
-        Scanner scan = new Scanner(System.in);
         this.company = company;
         this.username = username;
         this.password = password;
@@ -29,6 +28,7 @@ public class Account {
             sQuestion_2 = "-";
         }
     }
+
 
     public void save(PrintWriter out) {
         out.append(company+"\n");
