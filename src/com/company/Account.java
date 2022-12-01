@@ -3,7 +3,7 @@ import java.io.PrintWriter;
 import java.util.*;
 import static java.lang.Boolean.*;
 
-
+//an individual account on a specific company/site
 public class Account {
 
     //these are all the pieces of data we need to know for a given account on a website
@@ -29,7 +29,8 @@ public class Account {
         }
     }
 
-
+    //method for writing the account's contents into the user file,
+    //for both adding and changing
     public void save(PrintWriter out) {
         out.append(company+"\n");
         out.append(username+"\n");
@@ -51,6 +52,7 @@ public class Account {
         sQuestion_2 = in.nextLine();
     }
 
+    //getters for account info, used lots in GUI.java
     public String getUsername() {
         return username;
     }
@@ -68,5 +70,19 @@ public class Account {
     }
     public String getPassword() {
         return password;
+    }
+
+    //setters accessed when changing a password
+    public void setPassword(String password) {
+        this.password = password;
+    }
+    public void setSQ1(String sQuestion_1) {
+        this.sQuestion_1 = sQuestion_1;
+    }
+    public void setSQ2(String sQuestion_2) {
+        this.sQuestion_2 = sQuestion_2;
+    }
+    public void setIsProtected(Boolean isProtected) {
+        this.isProtected = isProtected;
     }
 }

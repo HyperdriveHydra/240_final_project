@@ -38,6 +38,7 @@ enum State {
     addUser
 }
 
+//listener for my buttons
 class ButtonListener implements ActionListener {
     private ButtonType button;
     private GUI gui;
@@ -59,18 +60,39 @@ class ButtonListener implements ActionListener {
         } else if (button == ButtonType.addUser) {
             gui.setState(State.addUser);
             gui.signIn();
+        } else if (button == ButtonType.changePass) {
+            gui.setState(State.changePass);
+            gui.signIn();
         } else if (button == ButtonType.site) {
             gui.setCompany(name);
             gui.getAcc();
         } else if (button == ButtonType.user) {
             if (gui.getState() == State.getPass) {
                 gui.setState(State.askSQ);
-                gui.askSQ(name);
             }
+            gui.askSQ(name);
+        } else if (button == ButtonType.with) {
+            gui.setIsProt(true);
+            gui.getAccount().setIsProtected(true);
+            gui.setState(State.setSQ);
+            gui.addSQ();
+        } else if (button == ButtonType.without) {
+            gui.getAccount().setPassword(gui.getPassword());
+            try {
+                PrintWriter clear = new PrintWriter(new FileWriter("users/"+gui.getUser().getUsername()+".user", false));
+                clear.append("");
+                for (Account a : gui.getAccounts()) {
+                    gui.getUser().addAccount(a);
+                }
+            } catch (IOException error) {
+                error.printStackTrace();
+            }
+            gui.toHome();
         }
     }
 }
 
+//listener for my text fields
 class TextListener implements ActionListener {
     private FieldType field;
     private JTextField text;
@@ -85,7 +107,7 @@ class TextListener implements ActionListener {
     public void actionPerformed(ActionEvent e) {
 
         if (field == FieldType.username) {
-            if (gui.getState() == State.getPass) {
+            if (gui.getState() == State.getPass || gui.getState() == State.changePass) {
                 gui.setUser(new User(text.getText()));
                 gui.getSite();
             } else if (gui.getState() == State.addPass) {
@@ -127,6 +149,34 @@ class TextListener implements ActionListener {
                 } else {
                     gui.setQ2(text.getText().substring(text.getText().indexOf(':')+2));
                 }
+            } else if (gui.getState() == State.changePass) {
+                if (text.getText().substring(0, text.getText().indexOf(':')).equals(gui.getQ1())) {
+                    if (!text.getText().substring(text.getText().indexOf(':')+2).equals(gui.getA1())) {
+                        JOptionPane.showMessageDialog(null, "Incorrect answer for security question 1. " +
+                                "The password will not be changed at this time.");
+                        gui.toHome();
+                    } else {
+                        gui.setAnswers(true);
+                    }
+                } else {
+                    if (text.getText().substring(text.getText().indexOf(':')+2).equals(gui.getA2())) {
+                        if (gui.getAnswers()) {
+                            gui.changePassword();
+                        } else {
+                            JOptionPane.showMessageDialog(null, "Security question 1 not answered.");
+                        }
+                    } else {
+                        JOptionPane.showMessageDialog(null, "Incorrect answer for security question 2. " +
+                                "The password will not be changed at this time.");
+                        gui.toHome();
+                    }
+                }
+            } else if (gui.getState() == State.setSQ) {
+                if (text.getText().charAt(0)=='F') {
+                    gui.setQ1(text.getText().substring(text.getText().indexOf(':')+2));
+                } else {
+                    gui.setQ2(text.getText().substring(text.getText().indexOf(':')+2));
+                }
             }
         } else if (field == FieldType.answer) {
             if (gui.getState() == State.askSQ) {
@@ -161,6 +211,22 @@ class TextListener implements ActionListener {
                             gui.getQ1()+"/"+gui.getA1(), gui.getQ2()+"/"+gui.getA2()));
                     gui.toHome();
                 }
+            } else if (gui.getState() == State.setSQ) {
+                if (text.getText().charAt(0)=='F') {
+                    gui.getAccount().setSQ1(gui.getQ1()+"/"+text.getText().substring(text.getText().indexOf(':')+2));
+                } else {
+                    gui.getAccount().setSQ2(gui.getQ2()+"/"+text.getText().substring(text.getText().indexOf(':')+2));
+                    try {
+                        PrintWriter clear = new PrintWriter(new FileWriter("users/"+gui.getUser().getUsername()+".user", false));
+                        clear.append("");
+                        for (Account a : gui.getAccounts()) {
+                            gui.getUser().addAccount(a);
+                        }
+                    } catch (IOException error) {
+                        error.printStackTrace();
+                    }
+                    gui.toHome();
+                }
             }
         } else if (field == FieldType.site) {
             gui.setCompany(text.getText().substring(text.getText().indexOf(':')+2));
@@ -168,6 +234,9 @@ class TextListener implements ActionListener {
             gui.setUsername(text.getText().substring(text.getText().indexOf(':')+2));
         } else if (field == FieldType.password) {
             gui.setPassword(text.getText().substring(text.getText().indexOf(':')+2));
+            if (gui.getState() == State.changePass) {
+                gui.getAccount().setPassword(text.getText().substring(text.getText().indexOf(':')+2));
+            }
         } else if (field == FieldType.prot) {
             gui.setIsProt(parseBoolean(text.getText().substring(text.getText().indexOf(':')+2)));
             if (gui.getIsProt()) {
@@ -181,8 +250,10 @@ class TextListener implements ActionListener {
     }
 }
 
+//the user interface, with all its instance variables and methods
 public class GUI extends JLabel{
 
+    //oh my, that's a lot of instance variables!
     private State state;
     private JFrame frame;
     private User user;
@@ -199,6 +270,7 @@ public class GUI extends JLabel{
     private ArrayList<Account> accounts;
     private ArrayList<String> companies;
 
+    //getters for instance variables
     public State getState() {
         return state;
     }
@@ -232,10 +304,14 @@ public class GUI extends JLabel{
     public Boolean getAnswers() {
         return answers;
     }
+    public ArrayList<Account> getAccounts() {
+        return accounts;
+    }
     public Account getAccount() {
         return account;
     }
 
+    //setters for instance variables
     public void setState(State state) {
         this.state = state;
     }
@@ -270,6 +346,7 @@ public class GUI extends JLabel{
         answers = a;
     }
 
+    //given a FieldType return a string to title the text field
     public static String fieldName(FieldType f) {
         switch(f) {
             case username:
@@ -290,6 +367,7 @@ public class GUI extends JLabel{
         throw new IllegalArgumentException("Invalid field type"+f.name());
     }
 
+    //given a ButtonType return a string to title that button
     public static String buttonName(ButtonType b) {
         switch(b) {
             case getPass:
@@ -300,15 +378,21 @@ public class GUI extends JLabel{
                 return "Change a password";
             case addUser:
                 return "Add a PassWorks user";
+            case with:
+                return "Add/Change security questions";
+            case without:
+                return "Change password only";
         }
         throw new IllegalArgumentException("Invalid button type"+b.name());
     }
 
+    //initializes the JFrame, then calls toHome()
     public GUI() {
         frame = new JFrame();
         toHome();
     }
 
+    //resets all instance variables and returns to the home screen
     public void toHome() {
 
         state = State.home;
@@ -326,6 +410,8 @@ public class GUI extends JLabel{
         passWorks();
     }
 
+    //draws the PassWorks home screen, with the four basic option buttons of
+    //get password, add password, change password, and add PassWorks user
     public void passWorks() {
         JPanel panel = new JPanel();
         panel.setBorder(BorderFactory.createEmptyBorder(30, 30, 30, 30));
@@ -346,6 +432,7 @@ public class GUI extends JLabel{
         frame.setVisible(true);
     }
 
+    //draws the sign-in page, which is included in 3/4 PassWorks functions
     public void signIn() {
         JPanel panel = new JPanel();
         panel.setBorder(BorderFactory.createEmptyBorder(200, 30, 200, 30));
@@ -361,6 +448,7 @@ public class GUI extends JLabel{
         frame.setVisible(true);
     }
 
+    //draws the list of sites for which the user has an account for as buttons
     public void getSite() {
         JPanel panel = new JPanel();
         panel.setBorder(BorderFactory.createEmptyBorder(30, 30, 30, 30));
@@ -379,7 +467,7 @@ public class GUI extends JLabel{
             e.printStackTrace();
         }
 
-        //asking about product/site and user to determine which account to get the password for
+        //asking about product/site and user to determine which account to get or change the password for
         for (Account a : accounts) {
             if(!companies.contains(a.getCompany())) {
                 companies.add(a.getCompany());
@@ -397,6 +485,7 @@ public class GUI extends JLabel{
         frame.setVisible(true);
     }
 
+    //draws the list of accounts that a user has on a site as buttons
     public void getAcc() {
         JPanel panel = new JPanel();
         panel.setBorder(BorderFactory.createEmptyBorder(30, 30, 30, 30));
@@ -418,8 +507,9 @@ public class GUI extends JLabel{
         frame.setVisible(true);
     }
 
-    //returns the password immediately if unprotected, otherwise asks security questions
-    //and only returns the password if both are correct
+    //if getting a password, it shows the password if unprotected or asks security questions
+    //first if protected, if changing a password it lets you change the password immediately
+    //if unprotected, or asks security questions first if protected
     public void askSQ(String acc) {
         for (Account a : accounts) {
             if (a.getCompany().equals(company) && a.getUsername().equals(acc)) {
@@ -447,13 +537,18 @@ public class GUI extends JLabel{
                     frame.setSize(500,500);
                     frame.setVisible(true);
                 } else {
-                    JOptionPane.showMessageDialog(null, a.getPassword());
-                    toHome();
+                    if (state == State.askSQ){
+                        JOptionPane.showMessageDialog(null, a.getPassword());
+                        toHome();
+                    } else if (state == State.changePass) {
+                        changePassword();
+                    }
                 }
             }
         }
     }
 
+    //draws the screen for adding a new Account/password to your PassWorks user
     public void addPass() {
         JPanel panel = new JPanel();
         panel.setBorder(BorderFactory.createEmptyBorder(30, 30, 30, 30));
@@ -475,6 +570,7 @@ public class GUI extends JLabel{
         frame.setVisible(true);
     }
 
+    //draws the screen for adding or changing the security questions of an Account
     public void addSQ() {
         JPanel panel = new JPanel();
         panel.setBorder(BorderFactory.createEmptyBorder(30, 30, 30, 30));
@@ -498,6 +594,34 @@ public class GUI extends JLabel{
             }
             panel.add(text);
             i++;
+        }
+        frame.setContentPane(panel);
+        frame.pack();
+        frame.setSize(500,500);
+        frame.setVisible(true);
+    }
+
+    //draws the screen for changing a password, showing the old password, having a
+    //text field for the new password, and buttons at the bottom for whether or not
+    //the user wants to change/add the security questions as well
+    public void changePassword() {
+        JPanel panel = new JPanel();
+        panel.setBorder(BorderFactory.createEmptyBorder(30, 30, 100, 30));
+        panel.setLayout(new GridLayout(2,2));
+        JTextField text = new JTextField("Old password: "+account.getPassword());
+        panel.add(text);
+        FieldType f = FieldType.password;
+        text = new JTextField("New password: ");
+        TextListener listener = new TextListener(f, text, this);
+        text.addActionListener(listener);
+        panel.add(text);
+        for (int i = 4; i < 6; i++) {
+            ButtonType b = ButtonType.values()[i];
+            String name = buttonName(b);
+            JButton button = new JButton(name);
+            ButtonListener bListener = new ButtonListener(b, this, name);
+            button.addActionListener(bListener);
+            panel.add(button);
         }
         frame.setContentPane(panel);
         frame.pack();
