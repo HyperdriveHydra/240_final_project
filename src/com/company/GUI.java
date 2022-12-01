@@ -602,7 +602,7 @@ public class GUI extends JLabel{
     }
 
     //draws the screen for changing a password, showing the old password, having a
-    //text field for the new password, and buttons at the bottom for whether or not
+    //text field for the new password, and buttons at the bottom for whether
     //the user wants to change/add the security questions as well
     public void changePassword() {
         JPanel panel = new JPanel();
