@@ -29,4 +29,14 @@ public class User {
     public String getUsername() {
         return username;
     }
+
+    public void addAccount(Account account) {
+        try {
+            PrintWriter out = new PrintWriter(new FileWriter("users/"+username+".user", true));
+            account.save(out);
+        } catch (IOException e) {
+            System.out.println("An error occurred");
+            e.printStackTrace();
+        }
+    }
 }

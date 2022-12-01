@@ -5,6 +5,7 @@ import java.awt.*;
 import java.io.*;
 import java.awt.event.*;
 import java.util.*;
+import static java.lang.Boolean.parseBoolean;
 
 enum ButtonType {
     getPass,
@@ -117,7 +118,56 @@ class TextListener implements ActionListener {
                         gui.toHome();
                     }
                 }
+            } else if (gui.getState() == State.addPass) {
+                if (text.getText().charAt(0)=='F') {
+                    gui.setQ1(text.getText().substring(text.getText().indexOf(':')+2));
+                } else {
+                    gui.setQ2(text.getText().substring(text.getText().indexOf(':')+2));
+                }
             }
+        } else if (field == FieldType.answer) {
+            if (gui.getState() == State.askSQ) {
+                if (text.getText().substring(0, text.getText().indexOf(':')).equals(gui.getQ1())) {
+                    if (!text.getText().substring(text.getText().indexOf(':')+2).equals(gui.getA1())) {
+                        JOptionPane.showMessageDialog(null, "Incorrect answer for security question 1. " +
+                                "The password will not be given at this time.");
+                        gui.toHome();
+                    } else {
+                        gui.setAnswers(true);
+                    }
+                } else {
+                    if (text.getText().substring(text.getText().indexOf(':')+2).equals(gui.getA2())) {
+                        if (gui.getAnswers()) {
+                            JOptionPane.showMessageDialog(null, gui.getAccount().getPassword());
+                            gui.toHome();
+                        } else {
+                            JOptionPane.showMessageDialog(null, "Security question 1 not answered.");
+                        }
+                    } else {
+                        JOptionPane.showMessageDialog(null, "Incorrect answer for security question 2. " +
+                                "The password will not be given at this time.");
+                        gui.toHome();
+                    }
+                }
+            } else if (gui.getState() == State.addPass) {
+                if (text.getText().charAt(0)=='F') {
+                    gui.setA1(text.getText().substring(text.getText().indexOf(':')+2));
+                } else {
+                    gui.setA2(text.getText().substring(text.getText().indexOf(':')+2));
+                    gui.getUser().addAccount(new Account(gui.getCompany(), gui.getUsername(), gui.getPassword(), gui.getIsProt(),
+                            gui.getQ1()+"/"+gui.getA1(), gui.getQ2()+"/"+gui.getA2()));
+                    gui.toHome();
+                }
+            }
+        } else if (field == FieldType.site) {
+            gui.setCompany(text.getText().substring(text.getText().indexOf(':')+2));
+        } else if (field == FieldType.user) {
+            gui.setUsername(text.getText().substring(text.getText().indexOf(':')+2));
+        } else if (field == FieldType.password) {
+            gui.setPassword(text.getText().substring(text.getText().indexOf(':')+2));
+        } else if (field == FieldType.prot) {
+            gui.setIsProt(parseBoolean(text.getText().substring(text.getText().indexOf(':')+2)));
+            gui.addSQ();
         }
     }
 }
@@ -127,21 +177,36 @@ public class GUI extends JLabel{
     private State state;
     private JFrame frame;
     private User user;
-    private ArrayList<Account> accounts;
-    private ArrayList<String> companies;
+    private Account account;
     private String company;
+    private String username;
+    private String password;
+    private Boolean isProt;
     private String a1;
     private String a2;
     private String q1;
     private String q2;
-    private Account account;
     private Boolean answers;
+    private ArrayList<Account> accounts;
+    private ArrayList<String> companies;
 
     public State getState() {
         return state;
     }
-    public void setState(State state) {
-        this.state = state;
+    public User getUser() {
+        return user;
+    }
+    public String getCompany() {
+        return company;
+    }
+    public String getUsername() {
+        return username;
+    }
+    public String getPassword() {
+        return password;
+    }
+    public Boolean getIsProt() {
+        return isProt;
     }
     public String getA1() {
         return a1;
@@ -153,19 +218,44 @@ public class GUI extends JLabel{
         return q1;
     }
     public String getQ2() {
-        return a2;
+        return q2;
+    }
+    public Boolean getAnswers() {
+        return answers;
     }
     public Account getAccount() {
         return account;
     }
+
+    public void setState(State state) {
+        this.state = state;
+    }
     public void setCompany(String company) {
         this.company = company;
     }
+    public void setUsername(String username) {
+        this.username = username;
+    }
+    public void setPassword(String password) {
+        this.password = password;
+    }
+    public void setIsProt(Boolean isProt) {
+        this.isProt = isProt;
+    }
+    public void setQ1(String q) {
+        this.q1 = q;
+    }
+    public void setQ2(String q) {
+        this.q2 = q;
+    }
+    public void setA1(String a) {
+        this.a1 = a;
+    }
+    public void setA2(String a) {
+        this.a2 = a;
+    }
     public void setUser(User user) {
         this.user = user;
-    }
-    public Boolean getAnswers() {
-        return answers;
     }
     public void setAnswers(Boolean a) {
         answers = a;
@@ -216,6 +306,9 @@ public class GUI extends JLabel{
         accounts = new ArrayList<>();
         companies = new ArrayList<>();
         company = "";
+        username = "";
+        password = "";
+        isProt = false;
         a1 = "";
         a2 = "";
         q1 = "";
@@ -366,6 +459,36 @@ public class GUI extends JLabel{
             TextListener listener = new TextListener(field, text, this);
             text.addActionListener(listener);
             panel.add(text);
+        }
+        frame.setContentPane(panel);
+        frame.pack();
+        frame.setSize(500,500);
+        frame.setVisible(true);
+    }
+
+    public void addSQ() {
+        JPanel panel = new JPanel();
+        panel.setBorder(BorderFactory.createEmptyBorder(30, 30, 30, 30));
+        panel.setLayout(new GridLayout(4,1));
+        ArrayList<FieldType> fields = new ArrayList<>();
+        fields.add(FieldType.question);
+        fields.add(FieldType.answer);
+        fields.add(FieldType.question);
+        fields.add(FieldType.answer);
+        int i = 0;
+        for (FieldType field : fields) {
+            JTextField text;
+            if (i < 2) {
+                text = new JTextField("First "+fieldName(field));
+                TextListener listener = new TextListener(field, text, this);
+                text.addActionListener(listener);
+            } else {
+                text = new JTextField("Second "+fieldName(field));
+                TextListener listener = new TextListener(field, text, this);
+                text.addActionListener(listener);
+            }
+            panel.add(text);
+            i++;
         }
         frame.setContentPane(panel);
         frame.pack();

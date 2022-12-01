@@ -1,4 +1,5 @@
 package com.company;
+import java.io.PrintWriter;
 import java.util.*;
 import static java.lang.Boolean.*;
 
@@ -14,25 +15,30 @@ public class Account {
     private String sQuestion_2;
 
     //this is a constructor for when the user is creating a new account
-    public Account(String company, String username, String password, Boolean isProtected) {
+    public Account(String company, String username, String password, Boolean isProtected, String q1, String q2) {
         Scanner scan = new Scanner(System.in);
         this.company = company;
         this.username = username;
         this.password = password;
         this.isProtected = isProtected;
         if (isProtected) {
-            System.out.print("Enter the first security question that you would like to protect this password: ");
-            sQuestion_1 = scan.nextLine();
-            System.out.print("Please enter the answer to this security question (case sensitive): ");
-            sQuestion_1 += "/" + scan.nextLine();
-            System.out.print("Enter the second security question that you would like to protect this password: ");
-            sQuestion_2 = scan.nextLine();
-            System.out.print("Please enter the answer to this security question (case sensitive): ");
-            sQuestion_2 += "/" + scan.nextLine();
+            sQuestion_1 = q1;
+            sQuestion_2 = q2;
         } else {
-            sQuestion_1 = "";
-            sQuestion_2 = "";
+            sQuestion_1 = "-";
+            sQuestion_2 = "-";
         }
+    }
+
+    public void save(PrintWriter out) {
+        out.append(company+"\n");
+        out.append(username+"\n");
+        out.append(password+"\n");
+        out.append(isProtected.toString()+"\n");
+        out.append(sQuestion_1+"\n");
+        out.append(sQuestion_2+"\n\n");
+        out.flush();
+        out.close();
     }
 
     //initializes an account from a file
