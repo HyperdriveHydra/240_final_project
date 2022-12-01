@@ -1,7 +1,6 @@
 package com.company;
 
 import javax.swing.*;
-import javax.imageio.*;
 import java.awt.*;
 import java.io.*;
 import java.awt.event.*;
@@ -16,42 +15,54 @@ enum ButtonType {
     without,
     site,
     user,
-    signIn
 }
 enum FieldType {
     username,
     site,
     question,
-    answer
+    answer,
+    user,
+    password,
+    prot
 }
 enum State {
     home,
     getPass,
     addPass,
     setSQ,
+    askSQ,
     changePass,
     addUser
 }
 class ButtonListener implements ActionListener {
     private ButtonType button;
     private GUI gui;
+    private String name;
 
-    public ButtonListener(ButtonType button, GUI gui) {
+    public ButtonListener(ButtonType button, GUI gui, String name) {
         this.button = button;
         this.gui = gui;
+        this.name = name;
     }
     @Override
     public void actionPerformed(ActionEvent e) {
-        switch(button) {
-            case getPass:
-                gui.setState(State.getPass);
-                gui.signIn();
-            case addPass:
-                gui.setState(State.addPass);
-                gui.signIn();
-            case addUser:
-                gui.setState(State.addUser);
-                gui.addUser();
+        if (button == ButtonType.getPass) {
+            gui.setState(State.getPass);
+            gui.signIn();
+        } else if (button == ButtonType.addPass) {
+            gui.setState(State.addPass);
+            gui.signIn();
+        } else if (button == ButtonType.addUser) {
+            gui.setState(State.addUser);
+            gui.signIn();
+        } else if (button == ButtonType.site) {
+            gui.setCompany(name);
+            gui.getAcc();
+        } else if (button == ButtonType.user) {
+            if (gui.getState() == State.getPass) {
+                gui.setState(State.askSQ);
+                gui.askSQ(name);
+            }
         }
     }
 }
@@ -68,25 +79,46 @@ class TextListener implements ActionListener {
     }
     @Override
     public void actionPerformed(ActionEvent e) {
-        switch(field) {
-            case username:
-                User user;
-                switch(gui.getState()) {
-                    case getPass:
-                        user = new User(text.getText());
-                        //JOptionPane.showMessageDialog(null, user.getPassword());
-                    case addPass:
-                        user = new User(text.getText());
-                        gui.toHome();
-                    case changePass:
-                        user = new User(text.getText());
-                        gui.toHome();
-                    case addUser:
-                        user = new User(text.getText(), true);
-                        gui.toHome();
-                }
-        }
 
+        if (field == FieldType.username) {
+            if (gui.getState() == State.getPass) {
+                gui.setUser(new User(text.getText()));
+                gui.getSite();
+            } else if (gui.getState() == State.addPass) {
+                gui.setUser(new User(text.getText()));
+                gui.addPass();
+            } else if (gui.getState() == State.changePass) {
+                gui.setUser(new User(text.getText()));
+            } else if (gui.getState() == State.addUser) {
+                new User(text.getText(), true);
+                gui.toHome();
+            }
+        } else if (field == FieldType.question) {
+            if (gui.getState() == State.askSQ) {
+                if (text.getText().substring(0, text.getText().indexOf(':')).equals(gui.getQ1())) {
+                    if (!text.getText().substring(text.getText().indexOf(':')+2).equals(gui.getA1())) {
+                        JOptionPane.showMessageDialog(null, "Incorrect answer for security question 1. " +
+                                "The password will not be given at this time.");
+                        gui.toHome();
+                    } else {
+                        gui.setAnswers(true);
+                    }
+                } else {
+                    if (text.getText().substring(text.getText().indexOf(':')+2).equals(gui.getA2())) {
+                        if (gui.getAnswers()) {
+                            JOptionPane.showMessageDialog(null, gui.getAccount().getPassword());
+                            gui.toHome();
+                        } else {
+                            JOptionPane.showMessageDialog(null, "Security question 1 not answered.");
+                        }
+                    } else {
+                        JOptionPane.showMessageDialog(null, "Incorrect answer for security question 2. " +
+                                "The password will not be given at this time.");
+                        gui.toHome();
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -94,14 +126,51 @@ public class GUI extends JLabel{
 
     private State state;
     private JFrame frame;
+    private User user;
+    private ArrayList<Account> accounts;
+    private ArrayList<String> companies;
+    private String company;
+    private String a1;
+    private String a2;
+    private String q1;
+    private String q2;
+    private Account account;
+    private Boolean answers;
 
     public State getState() {
         return state;
     }
-
     public void setState(State state) {
         this.state = state;
     }
+    public String getA1() {
+        return a1;
+    }
+    public String getA2() {
+        return a2;
+    }
+    public String getQ1() {
+        return q1;
+    }
+    public String getQ2() {
+        return a2;
+    }
+    public Account getAccount() {
+        return account;
+    }
+    public void setCompany(String company) {
+        this.company = company;
+    }
+    public void setUser(User user) {
+        this.user = user;
+    }
+    public Boolean getAnswers() {
+        return answers;
+    }
+    public void setAnswers(Boolean a) {
+        answers = a;
+    }
+
     public static String fieldName(FieldType f) {
         switch(f) {
             case username:
@@ -112,6 +181,12 @@ public class GUI extends JLabel{
                 return "Answer: ";
             case site:
                 return "Site: ";
+            case user:
+                return "User: ";
+            case password:
+                return "Password: ";
+            case prot:
+                return "Protected (true/false): ";
         }
         throw new IllegalArgumentException("Invalid field type"+f.name());
     }
@@ -131,16 +206,25 @@ public class GUI extends JLabel{
     }
 
     public GUI() {
+        frame = new JFrame();
         toHome();
     }
+
     public void toHome() {
+
         state = State.home;
+        accounts = new ArrayList<>();
+        companies = new ArrayList<>();
+        company = "";
+        a1 = "";
+        a2 = "";
+        q1 = "";
+        q2 = "";
+        answers = false;
         passWorks();
     }
 
     public void passWorks() {
-
-        frame = new JFrame();
         JPanel panel = new JPanel();
         panel.setBorder(BorderFactory.createEmptyBorder(30, 30, 30, 30));
         panel.setLayout(new GridLayout(2,2));
@@ -148,17 +232,16 @@ public class GUI extends JLabel{
             ButtonType b = ButtonType.values()[i];
             String name = buttonName(b);
             JButton button = new JButton(name);
-            ButtonListener listener = new ButtonListener(b, this);
+            ButtonListener listener = new ButtonListener(b, this, name);
             button.addActionListener(listener);
             panel.add(button);
         }
-        frame.add(panel, BorderLayout.CENTER);
+        frame.setContentPane(panel);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setTitle("PassWorks (Pre-alpha)");
         frame.pack();
         frame.setSize(500,500);
         frame.setVisible(true);
-
     }
 
     public void signIn() {
@@ -176,15 +259,114 @@ public class GUI extends JLabel{
         frame.setVisible(true);
     }
 
-    public void addUser() {
+    public void getSite() {
         JPanel panel = new JPanel();
-        panel.setBorder(BorderFactory.createEmptyBorder(200, 30, 200, 30));
-        panel.setLayout(new GridLayout(1,1));
-        FieldType f = FieldType.username;
-        JTextField text = new JTextField("Username: ");
-        TextListener listener = new TextListener(f, text, this);
-        text.addActionListener(listener);
-        panel.add(text);
+        panel.setBorder(BorderFactory.createEmptyBorder(30, 30, 30, 30));
+
+        //opening their .user file
+        File file = new File("users/"+user.getUsername()+".user");
+        try {
+            Scanner in = new Scanner(file);
+            while(in.hasNextLine()) {
+                Account account = new Account(in);
+                in.nextLine();
+                accounts.add(account);
+            }
+        } catch (FileNotFoundException e) {
+            System.out.println("File not found");
+            e.printStackTrace();
+        }
+
+        //asking about product/site and user to determine which account to get the password for
+        for (Account a : accounts) {
+            if(!companies.contains(a.getCompany())) {
+                companies.add(a.getCompany());
+                ButtonType b = ButtonType.site;
+                JButton button = new JButton(a.getCompany());
+                ButtonListener listener = new ButtonListener(b, this, a.getCompany());
+                button.addActionListener(listener);
+                panel.add(button);
+            }
+        }
+        panel.setLayout(new GridLayout(companies.size(),1));
+        frame.setContentPane(panel);
+        frame.pack();
+        frame.setSize(500,500);
+        frame.setVisible(true);
+    }
+
+    public void getAcc() {
+        JPanel panel = new JPanel();
+        panel.setBorder(BorderFactory.createEmptyBorder(30, 30, 30, 30));
+        int count = 0;
+        for (Account a : accounts) {
+            if (a.getCompany().equals(company)) {
+                count++;
+                ButtonType b = ButtonType.user;
+                JButton button = new JButton(a.getUsername());
+                ButtonListener listener = new ButtonListener(b, this, a.getUsername());
+                button.addActionListener(listener);
+                panel.add(button);
+            }
+        }
+        panel.setLayout(new GridLayout(count,1));
+        frame.setContentPane(panel);
+        frame.pack();
+        frame.setSize(500,500);
+        frame.setVisible(true);
+    }
+
+    //returns the password immediately if unprotected, otherwise asks security questions
+    //and only returns the password if both are correct
+    public void askSQ(String acc) {
+        for (Account a : accounts) {
+            if (a.getCompany().equals(company) && a.getUsername().equals(acc)) {
+                this.account = a;
+                if (a.getIsProtected()) {
+                    JPanel panel = new JPanel();
+                    ArrayList<String> qs = new ArrayList<>();
+                    panel.setBorder(BorderFactory.createEmptyBorder(150, 30, 150, 30));
+                    panel.setLayout(new GridLayout(2,1));
+                    q1 = a.getSQ_1().substring(0,a.getSQ_1().indexOf('/'));
+                    qs.add(q1);
+                    a1 = a.getSQ_1().substring(a.getSQ_1().indexOf('/')+1);
+                    q2 = a.getSQ_2().substring(0,a.getSQ_2().indexOf('/'));
+                    qs.add(q2);
+                    a2 = a.getSQ_2().substring(a.getSQ_2().indexOf('/')+1);
+                    for (String q : qs) {
+                        FieldType f = FieldType.question;
+                        JTextField text = new JTextField(q+": ");
+                        TextListener listener = new TextListener(f, text, this);
+                        text.addActionListener(listener);
+                        panel.add(text);
+                    }
+                    frame.setContentPane(panel);
+                    frame.pack();
+                    frame.setSize(500,500);
+                    frame.setVisible(true);
+                } else {
+                    JOptionPane.showMessageDialog(null, a.getPassword());
+                    toHome();
+                }
+            }
+        }
+    }
+
+    public void addPass() {
+        JPanel panel = new JPanel();
+        panel.setBorder(BorderFactory.createEmptyBorder(30, 30, 30, 30));
+        panel.setLayout(new GridLayout(4,1));
+        ArrayList<FieldType> fields = new ArrayList<>();
+        fields.add(FieldType.site);
+        fields.add(FieldType.user);
+        fields.add(FieldType.password);
+        fields.add(FieldType.prot);
+        for (FieldType field : fields) {
+            JTextField text = new JTextField(fieldName(field));
+            TextListener listener = new TextListener(field, text, this);
+            text.addActionListener(listener);
+            panel.add(text);
+        }
         frame.setContentPane(panel);
         frame.pack();
         frame.setSize(500,500);

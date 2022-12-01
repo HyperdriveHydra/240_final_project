@@ -51,27 +51,16 @@ public class Account {
     public String getCompany() {
         return company;
     }
-
-    //returns the password immediately if unprotected, otherwise asks security questions
-    //and only returns the password if both are correct
+    public Boolean getIsProtected() {
+        return isProtected;
+    }
+    public String getSQ_1() {
+        return sQuestion_1;
+    }
+    public String getSQ_2() {
+        return sQuestion_2;
+    }
     public String getPassword() {
-        Scanner scan = new Scanner(System.in);
-        if (isProtected) {
-            String q1 = sQuestion_1.substring(0,sQuestion_1.indexOf('/'));
-            String a1 = sQuestion_1.substring(sQuestion_1.indexOf('/')+1);
-            String q2 = sQuestion_2.substring(0,sQuestion_2.indexOf('/'));
-            String a2 = sQuestion_2.substring(sQuestion_2.indexOf('/')+1);
-            System.out.println("Security question 1: "+q1+": ");
-            String a = scan.nextLine();
-            if (!a.equals(a1)) {
-                return "Security question 1 failed, password will not be given";
-            }
-            System.out.println("Security question 2: "+q2+": ");
-            a = scan.nextLine();
-            if (!a.equals(a2)) {
-                return "Security question 2 failed, password will not be given";
-            }
-        }
         return password;
     }
 }
